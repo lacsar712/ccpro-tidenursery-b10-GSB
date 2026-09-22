@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import type { Hatchery, Pond } from '../types'
 
@@ -11,6 +12,7 @@ const empty = {
 }
 
 export default function Ponds() {
+  const navigate = useNavigate()
   const [hatcheries, setHatcheries] = useState<Hatchery[]>([])
   const [rows, setRows] = useState<Pond[]>([])
   const [form, setForm] = useState(empty)
@@ -152,7 +154,13 @@ export default function Ponds() {
                 <td>
                   <span className={`badge ${r.status}`}>{r.status}</span>
                 </td>
-                <td>
+                <td style={{ whiteSpace: 'nowrap' }}>
+                  <button
+                    className="btn ghost"
+                    onClick={() => navigate(`/meter-readings?pondId=${r.id}`)}
+                  >
+                    抄表
+                  </button>{' '}
                   <button className="btn ghost" onClick={() => remove(r.id)}>
                     删除
                   </button>

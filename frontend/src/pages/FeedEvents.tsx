@@ -1,6 +1,7 @@
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
-import type { FeedEvent, Pond } from '../types'
+import type { FeedEvent, MeterReading, Pond } from '../types'
 
 function nowLocal() {
   const d = new Date()
@@ -17,22 +18,35 @@ const empty = {
 }
 
 export default function FeedEvents() {
+  const navigate = useNavigate()
   const [ponds, setPonds] = useState<Pond[]>([])
   const [rows, setRows] = useState<FeedEvent[]>([])
+  const [readings, setReadings] = useState<MeterReading[]>([])
   const [form, setForm] = useState(empty)
   const [error, setError] = useState('')
 
   async function load() {
-    const [ps, es] = await Promise.all([
+    const [ps, es, ms] = await Promise.all([
       api<Pond[]>('/api/ponds'),
       api<FeedEvent[]>('/api/feed-events'),
+      api<MeterReading[]>('/api/meter-readings'),
     ])
     setPonds(ps)
     setRows(es)
+    setReadings(ms)
     if (!form.pondId && ps[0]) {
       setForm((f) => ({ ...f, pondId: ps[0].id }))
     }
   }
+
+  // feedEventId -> 抄见
+  const readingOfFeed = useMemo(() => {
+    const m = new Map<number, MeterReading>()
+    for (const r of readings) {
+      for (const a of r.allocations) m.set(a.feedEventId, r)
+    }
+    return m
+  }, [readings])
 
   useEffect(() => {
     load().catch((e) => setError(e.message))
@@ -145,25 +159,46 @@ export default function FeedEvents() {
               <th>饵料</th>
               <th>数量 kg</th>
               <th>操作人</th>
+              <th>电费分摊</th>
               <th />
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
-              <tr key={r.id}>
-                <td>{r.id}</td>
-                <td>{pondLabel(r.pondId)}</td>
-                <td>{new Date(r.fedAt).toLocaleString()}</td>
-                <td>{r.feedType}</td>
-                <td>{r.amountKg}</td>
-                <td>{r.operatorName}</td>
-                <td>
-                  <button className="btn ghost" onClick={() => remove(r.id)}>
-                    删除
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {rows.map((r) => {
+              const m = readingOfFeed.get(r.id)
+              return (
+                <tr key={r.id}>
+                  <td>{r.id}</td>
+                  <td>{pondLabel(r.pondId)}</td>
+                  <td>{new Date(r.fedAt).toLocaleString()}</td>
+                  <td>{r.feedType}</td>
+                  <td>{r.amountKg}</td>
+                  <td>{r.operatorName}</td>
+                  <td>
+                    {m ? (
+                      <button
+                        className="btn ghost"
+                        onClick={() =>
+                          navigate(`/meter-readings?pondId=${r.pondId}`)
+                        }
+                      >
+                        抄见 #{m.id}
+                        <span className={`badge ${m.sealed ? 'dry' : 'stocked'}`} style={{ marginLeft: 6 }}>
+                          {m.sealed ? '已封' : '未封'}
+                        </span>
+                      </button>
+                    ) : (
+                      <span className="muted">未挂账</span>
+                    )}
+                  </td>
+                  <td>
+                    <button className="btn ghost" onClick={() => remove(r.id)}>
+                      删除
+                    </button>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>

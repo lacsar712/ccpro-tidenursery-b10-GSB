@@ -5,7 +5,9 @@ from sqlalchemy.orm import Session
 
 from app.auth import get_current_user
 from app.database import get_db
+from app.models.feed_allocation import FeedAllocation
 from app.models.feed_event import FeedEvent
+from app.models.meter_reading import MeterReading
 from app.models.pond import Pond
 from app.models.user import User
 from app.schemas.feed_event import FeedEventCreate, FeedEventOut
@@ -56,5 +58,16 @@ def delete_event(
     item = db.query(FeedEvent).filter(FeedEvent.id == event_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="投喂记录不存在")
+    sealed = (
+        db.query(FeedAllocation.id)
+        .join(MeterReading, MeterReading.id == FeedAllocation.meter_reading_id)
+        .filter(
+            FeedAllocation.feed_event_id == event_id,
+            MeterReading.sealed.is_(True),
+        )
+        .first()
+    )
+    if sealed:
+        raise HTTPException(status_code=409, detail="该投喂已用于已封账抄见，不能删除")
     db.delete(item)
     db.commit()

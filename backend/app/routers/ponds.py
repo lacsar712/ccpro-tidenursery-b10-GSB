@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.auth import get_current_user
 from app.database import get_db
 from app.models.hatchery import Hatchery
+from app.models.meter_reading import MeterReading
 from app.models.pond import Pond
 from app.models.user import User
 from app.schemas.pond import PondCreate, PondUpdate, PondOut
@@ -99,6 +100,13 @@ def delete_pond(
     item = db.query(Pond).filter(Pond.id == pond_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="塘口不存在")
+    has_sealed = (
+        db.query(MeterReading.id)
+        .filter(MeterReading.pond_id == pond_id, MeterReading.sealed.is_(True))
+        .first()
+    )
+    if has_sealed:
+        raise HTTPException(status_code=409, detail="该塘口存在已封账抄见，不能删除")
     db.delete(item)
     try:
         db.commit()

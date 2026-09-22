@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from typing import List
+
 from sqlalchemy import String, Integer, Float, ForeignKey, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -17,3 +19,6 @@ class FeedEvent(Base):
     operator_name: Mapped[str] = mapped_column(String(64), nullable=False)
 
     pond: Mapped["Pond"] = relationship("Pond", back_populates="feed_events")
+    allocations: Mapped[List["FeedAllocation"]] = relationship(
+        "FeedAllocation", back_populates="feed_event", cascade="all, delete-orphan"
+    )

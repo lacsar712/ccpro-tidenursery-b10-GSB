@@ -46,11 +46,20 @@ docker compose up --build
 3. **Pond 育苗塘**：`hatcheryId`、`pondCode`、`species`、`volumeM3`、`status(stocked|dry|quarantine)`；同场 `pondCode` 唯一
 4. **WaterSample 水质样**：`pondId`、`sampledAt`、`tempC`、`salinityPpt`、`doMgL`、`ph`、`notes`；`doMgL > 0` 且 `ph ∈ [6,9]`，否则返回 **400**
 5. **FeedEvent 投喂**：`pondId`、`fedAt`、`feedType`、`amountKg`、`operatorName`
-6. **Dashboard**：塘总数、quarantine 数、近 24h 采样数、近 7 日投喂总量 kg
+6. **MeterReading 电表抄见**：按塘口登记，字段 `pondId`、`readingDate`、`startKwh`(起度)、`endKwh`(止度)、`unitPrice`(单价)；止度必须大于起度，同塘同日唯一
+7. **FeedAllocation 电费分摊**：把抄见挂到同塘投喂行上（`meterReadingId` + `feedEventId`），一笔投喂只能挂一张**未封**抄见；封抄后不可再改
+8. **Dashboard**：塘总数、quarantine 数、近 24h 采样数、近 7 日投喂总量 kg
+
+### 抄表封账与对账
+
+- **电量公式**：`电量(kWh) = 止度 − 起度`；**电费公式**：`电费 = 电量 × 单价`
+- **封抄** `POST /api/meter-readings/{id}/seal`：至少挂 **2 笔**投喂；系统校验电量等于「止度−起度」、电费等于「电量×单价」，误差不超过 **0.01**。不满足返回 **409**，已封账也返回 409
+- **对账** `GET /api/meter-readings/{id}/reconciliation`：返回该塘抄见的电量、电费与所挂投喂千克合计 `allocatedFeedKg`，供页面展示
+- 投喂挂账接口会校验：投喂须与抄见**同塘**，且该投喂未挂在其他抄见上
 
 ## 前端页面
 
-Login · Dashboard · Hatcheries · Ponds · WaterSamples · FeedEvents
+Login · Dashboard · Hatcheries · Ponds · WaterSamples · FeedEvents · MeterReadings（塘页「抄表」进入，按 `?pondId=` 定位塘口）
 
 ## 本地开发（可选）
 
