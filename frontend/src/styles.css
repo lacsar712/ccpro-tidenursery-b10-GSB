@@ -200,6 +200,66 @@ select {
   border: 1px solid var(--line);
 }
 
+.btn.small {
+  padding: 5px 10px;
+  font-size: 13px;
+}
+
+.reading-list {
+  display: grid;
+  gap: 14px;
+}
+
+.reading-card {
+  margin: 0;
+}
+
+.reading-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.reading-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin: 12px 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.reading-metrics strong {
+  color: var(--sea-deep);
+}
+
+.alloc-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.alloc-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  background: var(--sea-mist);
+  border-radius: 8px;
+  padding: 7px 10px;
+}
+
+.reading-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
 .table-wrap {
   overflow: auto;
 }

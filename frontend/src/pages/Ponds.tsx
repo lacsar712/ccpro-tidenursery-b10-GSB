@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import type { Hatchery, Pond } from '../types'
 
@@ -138,6 +139,7 @@ export default function Ponds() {
               <th>品种</th>
               <th>体积 m³</th>
               <th>状态</th>
+              <th>抄表</th>
               <th />
             </tr>
           </thead>
@@ -151,6 +153,14 @@ export default function Ponds() {
                 <td>{r.volumeM3}</td>
                 <td>
                   <span className={`badge ${r.status}`}>{r.status}</span>
+                </td>
+                <td>
+                  <Link
+                    className="btn ghost small"
+                    to={`/meter-readings?pondId=${r.id}`}
+                  >
+                    进入抄表
+                  </Link>
                 </td>
                 <td>
                   <button className="btn ghost" onClick={() => remove(r.id)}>

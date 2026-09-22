@@ -46,11 +46,22 @@ docker compose up --build
 3. **Pond 育苗塘**：`hatcheryId`、`pondCode`、`species`、`volumeM3`、`status(stocked|dry|quarantine)`；同场 `pondCode` 唯一
 4. **WaterSample 水质样**：`pondId`、`sampledAt`、`tempC`、`salinityPpt`、`doMgL`、`ph`、`notes`；`doMgL > 0` 且 `ph ∈ [6,9]`，否则返回 **400**
 5. **FeedEvent 投喂**：`pondId`、`fedAt`、`feedType`、`amountKg`、`operatorName`
-6. **Dashboard**：塘总数、quarantine 数、近 24h 采样数、近 7 日投喂总量 kg
+6. **MeterReading 电表抄见**：`pondId`、`readDate`、`startKwh`、`endKwh`、`unitPrice`、`sealed`；止度必须大于起度，同塘同日唯一
+7. **ReadingAllocation 分摊明细**：`readingId` + `feedId`；投喂须与抄见同塘，一笔投喂只能挂一张未封抄见
+8. **封抄 / 对账**：封抄须至少挂两笔投喂，且电量、电费校验通过（误差不超过 0.01），否则 **409**；对账接口返回每张抄见的电费与所挂投喂千克合计
+9. **Dashboard**：塘总数、quarantine 数、近 24h 采样数、近 7 日投喂总量 kg
+
+### 电表抄见公式
+
+- **电量(kWh) = 止度 − 起度**
+- **电费(元) = 电量 × 单价**
+- 封抄条件：未封 + 至少 2 笔同塘投喂挂载 + 电量/电费与公式一致（容差 0.01）；已封抄见不可增删投喂、不可删除
+
+种子数据含两份样例：A-01 当日抄见挂两笔投喂（可直接封抄），B-01 当日抄见仅挂一笔投喂（挂不够，封抄返回 409）。
 
 ## 前端页面
 
-Login · Dashboard · Hatcheries · Ponds · WaterSamples · FeedEvents
+Login · Dashboard · Hatcheries · Ponds · WaterSamples · FeedEvents · MeterReadings（塘页「进入抄表」按 `?pondId=` 进入）
 
 ## 本地开发（可选）
 

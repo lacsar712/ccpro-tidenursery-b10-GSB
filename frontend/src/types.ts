@@ -41,6 +41,29 @@ export type FeedEvent = {
   operatorName: string
 }
 
+export type MeterReading = {
+  id: number
+  pondId: number
+  readDate: string
+  startKwh: number
+  endKwh: number
+  unitPrice: number
+  sealed: boolean
+  kwhUsed: number
+  fee: number
+  feedEventIds: number[]
+}
+
+export type ReadingReconciliation = {
+  pondId: number
+  readingId: number
+  sealed: boolean
+  kwhUsed: number
+  fee: number
+  allocatedCount: number
+  allocatedFeedKg: number
+}
+
 export type DashboardStats = {
   pondTotal: number
   quarantineCount: number

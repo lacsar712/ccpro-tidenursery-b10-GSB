@@ -4,7 +4,9 @@ from app.auth import hash_password
 from app.database import SessionLocal
 from app.models.feed_event import FeedEvent
 from app.models.hatchery import Hatchery
+from app.models.meter_reading import MeterReading
 from app.models.pond import Pond
+from app.models.reading_allocation import ReadingAllocation
 from app.models.user import User
 from app.models.water_sample import WaterSample
 
@@ -77,6 +79,27 @@ def seed() -> None:
             db.flush()
 
             now = datetime.now(timezone.utc)
+            f1 = FeedEvent(
+                pond_id=p1.id,
+                fed_at=now - timedelta(hours=8),
+                feed_type="轮虫",
+                amount_kg=1.2,
+                operator_name="水质技术员",
+            )
+            f2 = FeedEvent(
+                pond_id=p1.id,
+                fed_at=now - timedelta(days=1),
+                feed_type="卤虫无节幼体",
+                amount_kg=0.8,
+                operator_name="场长",
+            )
+            f3 = FeedEvent(
+                pond_id=p3.id,
+                fed_at=now - timedelta(days=2),
+                feed_type="微藻饲料",
+                amount_kg=2.5,
+                operator_name="水质技术员",
+            )
             db.add_all(
                 [
                     WaterSample(
@@ -106,27 +129,36 @@ def seed() -> None:
                         ph=8.0,
                         notes=None,
                     ),
-                    FeedEvent(
-                        pond_id=p1.id,
-                        fed_at=now - timedelta(hours=8),
-                        feed_type="轮虫",
-                        amount_kg=1.2,
-                        operator_name="水质技术员",
-                    ),
-                    FeedEvent(
-                        pond_id=p1.id,
-                        fed_at=now - timedelta(days=1),
-                        feed_type="卤虫无节幼体",
-                        amount_kg=0.8,
-                        operator_name="场长",
-                    ),
-                    FeedEvent(
-                        pond_id=p3.id,
-                        fed_at=now - timedelta(days=2),
-                        feed_type="微藻饲料",
-                        amount_kg=2.5,
-                        operator_name="水质技术员",
-                    ),
+                    f1,
+                    f2,
+                    f3,
+                ]
+            )
+            db.flush()
+
+            # 抄见样例 1：A-01 今日抄见，挂两笔投喂 —— 可封
+            mr1 = MeterReading(
+                pond_id=p1.id,
+                read_date=now.date(),
+                start_kwh=1200.0,
+                end_kwh=1232.0,
+                unit_price=0.8,
+            )
+            # 抄见样例 2：B-01 今日抄见，只挂一笔投喂 —— 挂不够，封抄会 409
+            mr2 = MeterReading(
+                pond_id=p3.id,
+                read_date=now.date(),
+                start_kwh=800.0,
+                end_kwh=818.0,
+                unit_price=0.75,
+            )
+            db.add_all([mr1, mr2])
+            db.flush()
+            db.add_all(
+                [
+                    ReadingAllocation(reading_id=mr1.id, feed_event_id=f1.id),
+                    ReadingAllocation(reading_id=mr1.id, feed_event_id=f2.id),
+                    ReadingAllocation(reading_id=mr2.id, feed_event_id=f3.id),
                 ]
             )
             db.commit()
